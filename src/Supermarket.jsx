@@ -304,6 +304,144 @@ const Cashier = ({ position, rotation }) => {
     );
 };
 
+// 3D Shopper Component (NPC)
+const Shopper = ({ position, rotation, shirtColor = "blue", pantsColor = "#333" }) => {
+    const scale = 0.42;
+    return (
+        <group position={position} rotation={rotation} scale={[scale, scale, scale]}>
+            {/* Legs */}
+            <mesh position={[-0.2, 0.75, 0]} castShadow>
+                <cylinderGeometry args={[0.1, 0.1, 1.5]} />
+                <meshStandardMaterial color={pantsColor} />
+            </mesh>
+            <mesh position={[0.2, 0.75, 0]} castShadow>
+                <cylinderGeometry args={[0.1, 0.1, 1.5]} />
+                <meshStandardMaterial color={pantsColor} />
+            </mesh>
+
+            {/* Torso (Shirt) */}
+            <mesh position={[0, 1.9, 0]} castShadow>
+                <boxGeometry args={[0.6, 0.8, 0.3]} />
+                <meshStandardMaterial color={shirtColor} />
+            </mesh>
+
+            {/* Head */}
+            <mesh position={[0, 2.5, 0]} castShadow>
+                <sphereGeometry args={[0.25]} />
+                <meshStandardMaterial color="#ffccaa" />
+            </mesh>
+
+            {/* Hair */}
+            <mesh position={[0, 2.65, -0.05]} castShadow>
+                <sphereGeometry args={[0.27]} />
+                <meshStandardMaterial color="#333" />
+            </mesh>
+
+            {/* Arms */}
+            <mesh position={[-0.35, 1.9, 0]} rotation={[0, 0, 0.2]} castShadow>
+                <cylinderGeometry args={[0.08, 0.08, 0.7]} />
+                <meshStandardMaterial color={shirtColor} />
+            </mesh>
+            <mesh position={[0.35, 1.9, 0]} rotation={[0, 0, -0.2]} castShadow>
+                <cylinderGeometry args={[0.08, 0.08, 0.7]} />
+                <meshStandardMaterial color={shirtColor} />
+            </mesh>
+            {/* Hands */}
+            <mesh position={[-0.4, 1.5, 0]} castShadow>
+                <sphereGeometry args={[0.09]} />
+                <meshStandardMaterial color="#ffccaa" />
+            </mesh>
+            <mesh position={[0.4, 1.5, 0]} castShadow>
+                <sphereGeometry args={[0.09]} />
+                <meshStandardMaterial color="#ffccaa" />
+            </mesh>
+        </group>
+    );
+};
+
+// Decorative Sign Component
+const Sign = ({ position, text, color = "#4a90e2" }) => {
+    return (
+        <group position={position}>
+            {/* Hanging wires */}
+            <mesh position={[-0.5, 0.5, 0]}>
+                <cylinderGeometry args={[0.01, 0.01, 1]} />
+                <meshStandardMaterial color="#333" />
+            </mesh>
+            <mesh position={[0.5, 0.5, 0]}>
+                <cylinderGeometry args={[0.01, 0.01, 1]} />
+                <meshStandardMaterial color="#333" />
+            </mesh>
+            {/* Sign Board */}
+            <mesh position={[0, 0, 0]}>
+                <boxGeometry args={[1.5, 0.5, 0.1]} />
+                <meshStandardMaterial color={color} />
+            </mesh>
+            {/* Text */}
+            <Text
+                position={[0, 0, 0.06]}
+                fontSize={0.2}
+                color="white"
+                anchorX="center"
+                anchorY="middle"
+            >
+                {text}
+            </Text>
+            <Text
+                position={[0, 0, -0.06]}
+                rotation={[0, Math.PI, 0]}
+                fontSize={0.2}
+                color="white"
+                anchorX="center"
+                anchorY="middle"
+            >
+                {text}
+            </Text>
+        </group>
+    );
+};
+
+// Simple Shopping Cart Component
+const Cart = ({ position, rotation }) => {
+    return (
+        <group position={position} rotation={rotation}>
+            {/* Basket */}
+            <mesh position={[0, 0.5, 0]} castShadow>
+                <boxGeometry args={[0.6, 0.4, 0.8]} />
+                <meshStandardMaterial color="#silver" wireframe />
+            </mesh>
+            <mesh position={[0, 0.5, 0]} castShadow>
+                <boxGeometry args={[0.58, 0.38, 0.78]} />
+                <meshStandardMaterial color="#888" transparent opacity={0.1} />
+            </mesh>
+
+            {/* Handle */}
+            <mesh position={[0, 0.8, 0.45]}>
+                <cylinderGeometry args={[0.02, 0.02, 0.5]} rotation={[0, 0, Math.PI / 2]} />
+                <meshStandardMaterial color="red" />
+            </mesh>
+
+            {/* Wheels */}
+            <mesh position={[-0.25, 0.1, 0.35]}>
+                <cylinderGeometry args={[0.05, 0.05, 0.05]} rotation={[0, 0, Math.PI / 2]} />
+                <meshStandardMaterial color="black" />
+            </mesh>
+            <mesh position={[0.25, 0.1, 0.35]}>
+                <cylinderGeometry args={[0.05, 0.05, 0.05]} rotation={[0, 0, Math.PI / 2]} />
+                <meshStandardMaterial color="black" />
+            </mesh>
+            <mesh position={[-0.25, 0.1, -0.35]}>
+                <cylinderGeometry args={[0.05, 0.05, 0.05]} rotation={[0, 0, Math.PI / 2]} />
+                <meshStandardMaterial color="black" />
+            </mesh>
+            <mesh position={[0.25, 0.1, -0.35]}>
+                <cylinderGeometry args={[0.05, 0.05, 0.05]} rotation={[0, 0, Math.PI / 2]} />
+                <meshStandardMaterial color="black" />
+            </mesh>
+        </group>
+    );
+};
+
 const Environment = () => {
     const floorTexture = useLoader(THREE.TextureLoader, '/textures/floor.jpg');
     const ceilingTexture = useLoader(THREE.TextureLoader, '/textures/ceiling.jpg');
@@ -340,16 +478,41 @@ const Environment = () => {
             <PhysicsPlane position={[-10, 2.5, 0]} rotation={[0, Math.PI / 2, 0]} args={[20, 5]} material="wall" color="#f5f5f5" side={THREE.DoubleSide} />
             <PhysicsPlane position={[10, 2.5, 0]} rotation={[0, -Math.PI / 2, 0]} args={[20, 5]} material="wall" color="#f5f5f5" side={THREE.DoubleSide} />
 
-            {/* 3 Shelves - In front of the player, behind the counter area */}
+            {/* Original Shelves - Center Aisle */}
             <Shelf position={[-3, 0, -5]} texture={realShelfTexture} />
             <Shelf position={[0, 0, -5]} texture={realShelfTexture} />
             <Shelf position={[3, 0, -5]} texture={realShelfTexture} />
+
+            {/* New Shelves - Left Aisle */}
+            <Shelf position={[-7, 0, -2]} rotation={[0, Math.PI / 2, 0]} texture={realShelfTexture} />
+            <Shelf position={[-7, 0, -5]} rotation={[0, Math.PI / 2, 0]} texture={realShelfTexture} />
+            <Shelf position={[-7, 0, -8]} rotation={[0, Math.PI / 2, 0]} texture={realShelfTexture} />
+
+            {/* New Shelves - Right Aisle */}
+            <Shelf position={[7, 0, -2]} rotation={[0, -Math.PI / 2, 0]} texture={realShelfTexture} />
+            <Shelf position={[7, 0, -5]} rotation={[0, -Math.PI / 2, 0]} texture={realShelfTexture} />
+            <Shelf position={[7, 0, -8]} rotation={[0, -Math.PI / 2, 0]} texture={realShelfTexture} />
 
             {/* Checkout Counter - Entre el jugador y el NPC */}
             <CheckoutCounter position={[0, 0, -0.7]} texture={realCounterTexture} registerTexture={registerTexture} cashRegisterTexture={cashRegisterTexture} />
 
             {/* Cashier - Behind the counter */}
             <Cashier position={[0, 0, -1.5]} rotation={[0, 0, 0]} />
+
+            {/* Ambient Shoppers */}
+            <Shopper position={[-5, 0, -2]} rotation={[0, Math.PI / 2, 0]} shirtColor="red" />
+            <Shopper position={[6, 0, -6]} rotation={[0, -Math.PI / 4, 0]} shirtColor="green" />
+            <Shopper position={[-2, 0, 3]} rotation={[0, Math.PI, 0]} shirtColor="orange" />
+
+            {/* Signs */}
+            <Sign position={[-7, 3.5, -5]} text="Produce" color="#4CAF50" />
+            <Sign position={[0, 3.5, -5]} text="Snacks" color="#FF9800" />
+            <Sign position={[7, 3.5, -5]} text="Dairy" color="#2196F3" />
+
+            {/* Shopping Carts */}
+            <Cart position={[2, 0, 2]} rotation={[0, 0.5, 0]} />
+            <Cart position={[3, 0, 2.5]} rotation={[0, 0.2, 0]} />
+            <Cart position={[-8, 0, 8]} rotation={[0, -0.5, 0]} />
         </>
     )
 }
@@ -374,6 +537,26 @@ const Supermarket = () => {
             setIsLocked(true);
         }
     };
+
+    // Extended Product Data including new shelves
+    const ALL_PRODUCTS = [
+        ...PRODUCTS_DATA,
+        // Left Aisle Products
+        { id: 'l1-1', name: 'Lechuga', type: 'sphere', position: [-7, 0.525, -2], texture: 'lettuce' },
+        { id: 'l1-2', name: 'Tomate', type: 'sphere', position: [-7, 1.125, -2], texture: 'tomato' },
+        { id: 'l1-3', name: 'Papas Lays', type: 'box', position: [-7, 1.725, -2], texture: 'lays' },
+        { id: 'l2-1', name: 'Lechuga', type: 'sphere', position: [-7, 0.525, -5], texture: 'lettuce' },
+        { id: 'l2-2', name: 'Tomate', type: 'sphere', position: [-7, 1.125, -5], texture: 'tomato' },
+        { id: 'l2-3', name: 'Papas Lays', type: 'box', position: [-7, 1.725, -5], texture: 'lays' },
+
+        // Right Aisle Products
+        { id: 'r1-1', name: 'Papas Lays', type: 'box', position: [7, 0.525, -2], texture: 'lays' },
+        { id: 'r1-2', name: 'Papas Lays', type: 'box', position: [7, 1.125, -2], texture: 'lays' },
+        { id: 'r1-3', name: 'Papas Lays', type: 'box', position: [7, 1.725, -2], texture: 'lays' },
+        { id: 'r2-1', name: 'Tomate', type: 'sphere', position: [7, 0.525, -5], texture: 'tomato' },
+        { id: 'r2-2', name: 'Tomate', type: 'sphere', position: [7, 1.125, -5], texture: 'tomato' },
+        { id: 'r2-3', name: 'Tomate', type: 'sphere', position: [7, 1.725, -5], texture: 'tomato' },
+    ];
 
     return (
         <Canvas onClick={handleCanvasClick} camera={{ fov: 60, position: [0, 1.7, 5] }} shadows>
@@ -407,7 +590,7 @@ const Supermarket = () => {
                 </React.Suspense>
 
                 {/* Products - Rendered from Centralized Data */}
-                {PRODUCTS_DATA.map((product) => (
+                {ALL_PRODUCTS.map((product) => (
                     <Product
                         key={product.id}
                         position={product.position}
