@@ -408,7 +408,7 @@ const Cart = ({ position, rotation }) => {
             {/* Basket */}
             <mesh position={[0, 0.5, 0]} castShadow>
                 <boxGeometry args={[0.6, 0.4, 0.8]} />
-                <meshStandardMaterial color="#silver" wireframe />
+                <meshStandardMaterial color="silver" wireframe />
             </mesh>
             <mesh position={[0, 0.5, 0]} castShadow>
                 <boxGeometry args={[0.58, 0.38, 0.78]} />
@@ -562,7 +562,7 @@ const Supermarket = () => {
         <Canvas onClick={handleCanvasClick} camera={{ fov: 60, position: [0, 1.7, 5] }} shadows>
             {/* Improved Lighting */}
             <color attach="background" args={['#f0f0f0']} />
-            <ambientLight intensity={0.6} color="#fff0e0" /> {/* Warm ambient */}
+            <ambientLight intensity={0.6} color="#fff0e0" />
             <hemisphereLight skyColor={"#ffffff"} groundColor={"#444444"} intensity={0.4} />
 
             {/* Main Directional Light (Sun/Overhead) */}

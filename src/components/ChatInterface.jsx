@@ -47,7 +47,19 @@ const ChatInterface = ({ products }) => {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://localhost:3001/api/chat', {
+            // Use relative path for Netlify Functions (works in prod and dev if proxied)
+            // Or absolute path if needed, but relative is best for portability
+            const apiUrl = import.meta.env.PROD
+                ? '/.netlify/functions/chat'
+                : 'http://localhost:3001/api/chat'; // Keep localhost for local dev if not using netlify dev
+
+            // Actually, let's just use the relative path and assume we might use 'netlify dev' locally
+            // But to be safe for the user's current local setup without netlify dev:
+            const url = window.location.hostname === 'localhost' && window.location.port === '5173'
+                ? 'http://localhost:3001/api/chat'
+                : '/.netlify/functions/chat';
+
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
