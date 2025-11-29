@@ -4,6 +4,8 @@ import { Box, Plane, PointerLockControls, Text, Cylinder, Sphere } from '@react-
 import { Physics, usePlane, useBox, useSphere, useContactMaterial } from '@react-three/cannon';
 import * as THREE from 'three';
 
+import MobileControls from './components/MobileControls';
+
 const Player = () => {
     const { camera } = useThree();
     const [ref, api] = useSphere(() => ({ mass: 1, position: [0, 1, 0], args: [0.5], material: 'player' }));
@@ -16,6 +18,9 @@ const Player = () => {
         jump: false,
     });
 
+    // Mobile input refs
+    const joystickRef = useRef({ x: 0, y: 0 });
+
     useEffect(() => {
         api.velocity.subscribe((v) => (velocity.current = v));
     }, [api.velocity]);
@@ -23,63 +28,63 @@ const Player = () => {
     useEffect(() => {
         const handleKeyDown = (e) => {
             switch (e.code) {
-                case 'KeyW':
-                    setMovement((m) => ({ ...m, forward: true }));
-                    break;
-                case 'KeyS':
-                    setMovement((m) => ({ ...m, backward: true }));
-                    break;
-                case 'KeyA':
-                    setMovement((m) => ({ ...m, left: true }));
-                    break;
-                case 'KeyD':
-                    setMovement((m) => ({ ...m, right: true }));
-                    break;
-                case 'Space':
-                    setMovement((m) => ({ ...m, jump: true }));
-                    break;
-                default:
-                    break;
+                case 'KeyW': setMovement((m) => ({ ...m, forward: true })); break;
+                case 'KeyS': setMovement((m) => ({ ...m, backward: true })); break;
+                case 'KeyA': setMovement((m) => ({ ...m, left: true })); break;
+                case 'KeyD': setMovement((m) => ({ ...m, right: true })); break;
+                case 'Space': setMovement((m) => ({ ...m, jump: true })); break;
+                default: break;
             }
         };
 
         const handleKeyUp = (e) => {
             switch (e.code) {
-                case 'KeyW':
-                    setMovement((m) => ({ ...m, forward: false }));
-                    break;
-                case 'KeyS':
-                    setMovement((m) => ({ ...m, backward: false }));
-                    break;
-                case 'KeyA':
-                    setMovement((m) => ({ ...m, left: false }));
-                    break;
-                case 'KeyD':
-                    setMovement((m) => ({ ...m, right: false }));
-                    break;
-                case 'Space':
-                    setMovement((m) => ({ ...m, jump: false }));
-                    break;
-                default:
-                    break;
+                case 'KeyW': setMovement((m) => ({ ...m, forward: false })); break;
+                case 'KeyS': setMovement((m) => ({ ...m, backward: false })); break;
+                case 'KeyA': setMovement((m) => ({ ...m, left: false })); break;
+                case 'KeyD': setMovement((m) => ({ ...m, right: false })); break;
+                case 'Space': setMovement((m) => ({ ...m, jump: false })); break;
+                default: break;
             }
+        };
+
+        // Custom Event Listeners for Mobile
+        const handleJoystickMove = (e) => {
+            joystickRef.current = e.detail;
+        };
+
+        const handleTouchLook = (e) => {
+            const { x, y } = e.detail;
+            const sensitivity = 0.005;
+            camera.rotation.y -= x * sensitivity;
+            // camera.rotation.x -= y * sensitivity; // Optional: vertical look
+            // Clamp vertical look if needed, but for now just horizontal is safer to avoid flipping
         };
 
         document.addEventListener('keydown', handleKeyDown);
         document.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('joystick-move', handleJoystickMove);
+        window.addEventListener('touch-look', handleTouchLook);
 
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
             document.removeEventListener('keyup', handleKeyUp);
+            window.removeEventListener('joystick-move', handleJoystickMove);
+            window.removeEventListener('touch-look', handleTouchLook);
         };
-    }, []);
+    }, [camera]);
 
     useFrame(() => {
         camera.position.copy(ref.current.position);
         const speed = 3;
         const direction = new THREE.Vector3();
-        const frontVector = new THREE.Vector3(0, 0, (movement.backward ? 1 : 0) - (movement.forward ? 1 : 0));
-        const sideVector = new THREE.Vector3((movement.left ? 1 : 0) - (movement.right ? 1 : 0), 0, 0);
+
+        // Combine Keyboard and Joystick Input
+        const frontInput = (movement.backward ? 1 : 0) - (movement.forward ? 1 : 0) + joystickRef.current.y;
+        const sideInput = (movement.left ? 1 : 0) - (movement.right ? 1 : 0) - joystickRef.current.x;
+
+        const frontVector = new THREE.Vector3(0, 0, frontInput);
+        const sideVector = new THREE.Vector3(sideInput, 0, 0);
 
         direction
             .subVectors(frontVector, sideVector)
@@ -517,9 +522,29 @@ const Environment = () => {
     )
 }
 
+const Materials = () => {
+    useContactMaterial('ground', 'player', {
+        friction: 0.8,
+        restitution: 0.1,
+    });
+    useContactMaterial('wall', 'player', {
+        friction: 0,
+        restitution: 0,
+    });
+    return null;
+}
 
 const Supermarket = () => {
     const [isLocked, setIsLocked] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            return /android|ipad|iphone|ipod/i.test(userAgent);
+        };
+        setIsMobile(checkMobile());
+    }, []);
 
     // Load product textures (user-provided)
     const lettuceTexture = useLoader(THREE.TextureLoader, '/textures/lechuga_final.jpg');
@@ -533,9 +558,18 @@ const Supermarket = () => {
     };
 
     const handleCanvasClick = () => {
-        if (!isLocked) {
+        if (!isLocked && !isMobile) {
             setIsLocked(true);
         }
+    };
+
+    // Mobile Event Dispatchers
+    const onMobileMove = (data) => {
+        window.dispatchEvent(new CustomEvent('joystick-move', { detail: data }));
+    };
+
+    const onMobileLook = (data) => {
+        window.dispatchEvent(new CustomEvent('touch-look', { detail: data }));
     };
 
     // Extended Product Data including new shelves
@@ -559,75 +593,67 @@ const Supermarket = () => {
     ];
 
     return (
-        <Canvas onClick={handleCanvasClick} camera={{ fov: 60, position: [0, 1.7, 5] }} shadows>
-            {/* Improved Lighting */}
-            <color attach="background" args={['#f0f0f0']} />
-            <ambientLight intensity={0.6} color="#fff0e0" />
-            <hemisphereLight skyColor={"#ffffff"} groundColor={"#444444"} intensity={0.4} />
+        <>
+            {isMobile && <MobileControls onMove={onMobileMove} onLook={onMobileLook} />}
+            <Canvas onClick={handleCanvasClick} camera={{ fov: 60, position: [0, 1.7, 5] }} shadows>
+                {/* Improved Lighting */}
+                <color attach="background" args={['#f0f0f0']} />
+                <ambientLight intensity={0.6} color="#fff0e0" />
+                <hemisphereLight skyColor={"#ffffff"} groundColor={"#444444"} intensity={0.4} />
 
-            {/* Main Directional Light (Sun/Overhead) */}
-            <directionalLight
-                position={[5, 10, 5]}
-                intensity={1.2}
-                castShadow
-                shadow-mapSize-width={2048}
-                shadow-mapSize-height={2048}
-                shadow-camera-left={-15}
-                shadow-camera-right={15}
-                shadow-camera-top={15}
-                shadow-camera-bottom={-15}
-                shadow-bias={-0.0001}
-            />
+                {/* Main Directional Light (Sun/Overhead) */}
+                <directionalLight
+                    position={[5, 10, 5]}
+                    intensity={1.2}
+                    castShadow
+                    shadow-mapSize-width={2048}
+                    shadow-mapSize-height={2048}
+                    shadow-camera-left={-15}
+                    shadow-camera-right={15}
+                    shadow-camera-top={15}
+                    shadow-camera-bottom={-15}
+                    shadow-bias={-0.0001}
+                />
 
-            {/* Point Lights for interior ambiance */}
-            <pointLight position={[0, 4, -5]} intensity={0.5} distance={15} decay={2} color="#fff5cc" />
-            <pointLight position={[0, 4, 2]} intensity={0.5} distance={15} decay={2} color="#fff5cc" />
+                {/* Point Lights for interior ambiance */}
+                <pointLight position={[0, 4, -5]} intensity={0.5} distance={15} decay={2} color="#fff5cc" />
+                <pointLight position={[0, 4, 2]} intensity={0.5} distance={15} decay={2} color="#fff5cc" />
 
-            <Physics gravity={[0, -50, 0]}>
-                <Player />
-                <React.Suspense fallback={null}>
-                    <Environment />
-                </React.Suspense>
+                <Physics gravity={[0, -50, 0]}>
+                    <Materials />
+                    <Player />
+                    <React.Suspense fallback={null}>
+                        <Environment />
+                    </React.Suspense>
 
-                {/* Products - Rendered from Centralized Data */}
-                {ALL_PRODUCTS.map((product) => (
-                    <Product
-                        key={product.id}
-                        position={product.position}
-                        shape={product.type}
-                        textureMap={textures[product.texture]}
-                    />
+                    {/* Products - Rendered from Centralized Data */}
+                    {ALL_PRODUCTS.map((product) => (
+                        <Product
+                            key={product.id}
+                            position={product.position}
+                            shape={product.type}
+                            textureMap={textures[product.texture]}
+                        />
+                    ))}
+
+                </Physics>
+
+                {!isMobile && (isLocked ? (
+                    <PointerLockControls />
+                ) : (
+                    <Text
+                        position={[0, 0, -2]}
+                        fontSize={0.5}
+                        color="black"
+                        anchorX="center"
+                        anchorY="middle"
+                    >
+                        Click to start
+                    </Text>
                 ))}
-
-            </Physics>
-
-            {isLocked ? (
-                <PointerLockControls />
-            ) : (
-                <Text
-                    position={[0, 0, -2]}
-                    fontSize={0.5}
-                    color="black"
-                    anchorX="center"
-                    anchorY="middle"
-                >
-                    Click to start
-                </Text>
-            )}
-        </Canvas>
+            </Canvas>
+        </>
     );
 };
-
-const Materials = () => {
-    useContactMaterial('ground', 'player', {
-        friction: 0.8,
-        restitution: 0.1,
-    });
-    useContactMaterial('wall', 'player', {
-        friction: 0,
-        restitution: 0,
-    });
-    return null;
-}
 
 export default Supermarket;
